@@ -8,8 +8,8 @@ For a relatively small monorepo it can be acceptable to have builds run for each
 However, if you a have a monorepo with a dozen of services/components, even the smallest change can introduce 
 big delays in the CI process making it less efficient.  
   
-This repository is an example of CircleCI optimized for a monorepo that has four services. 
-The CircleCI has workflows defined per each service, that are triggered on every push only when the corresponding service has code changes.  
+This repository is an example of configuring CircleCI for a monorepo that has four services. 
+The CircleCI configuration file has workflows defined per each service, that are triggered on every push only when the corresponding service has code changes.  
 
 The sample services/components are `api`, `app`, `auth` and `gateway` all located in the subdirectory `/packages`.
 For each service a CircleCI workflow with the same name is defined in `.circleci/config.yml` file.
@@ -42,7 +42,8 @@ Below is a more detailed explanation of how it detects changes:
 - Once it has the commit SHA of latest CircleCI workflow, it uses `git log` to list all changes between the two commits and flag those services for which changes are found in their directories.
 
 ## Before you start
-To be able to trigger workflows via API, you need a CircleCI [personal API token](https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token). The `circle_trigger.sh` script expects to find the token in `CIRCLE_TOKEN` environment variable.  
+To be able to trigger workflows via API, you need a CircleCI [personal API token](https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token).  
+The `circle_trigger.sh` script expects to find the token in `CIRCLE_TOKEN` environment variable.  
 To prevent having the tokens published to git, you can use [project environment variables](https://circleci.com/docs/2.0/env-vars/#setting-an-environment-variable-in-a-project).  
 
 ## How to configure new services/components
@@ -117,3 +118,8 @@ a variable for each team member by following a convention, and then use the buil
 TOKEN_NAME=CIRCLE_TOKEN_${CIRCLE_USERNAME} # this however will fail if username contain chars like `-`, '.' etc.
 CIRCLE_TOKEN=${!TOKEN_NAME}
 ```
+
+### Dependencies
+Current example assumes all services are independent, so that changes made in one service doesn't require a CI build in another service. It doesn't cover the use case when a monorepo contains some shared libraries which are referenced as dependencies in other services. A change in a shared librabry might need all dependent services to be rebuilt or redeployed.  
+
+This example could be developed further to handle service dependencies. One way to achieve this is to define a `.dependencies` file which represents the dependencies between services. Then, the `circle_trigger.sh` script should be adjusted to handle the changed services together with all other services that depend on them.
