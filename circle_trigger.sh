@@ -10,8 +10,9 @@ CIRCLE_API="https://circleci.com/api"
 ############################################
 ## 1. Commit SHA of last CI build
 ############################################
-LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=1&shallow=true"
-LAST_COMPLETED_BUILD_SHA=`curl -Ss -u ${CIRCLE_TOKEN}: ${LAST_COMPLETED_BUILD_URL} | jq -r '.[0]["vcs_revision"]'`
+LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=100&shallow=true"
+curl -Ss -u ${CIRCLE_TOKEN}: ${LAST_COMPLETED_BUILD_URL} > circle.json
+LAST_COMPLETED_BUILD_SHA=`cat circle.json | jq -r '.[0]["vcs_revision"]'`
 
 if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mThere are no completed CI builds in branch ${CIRCLE_BRANCH}.\e[0m"
@@ -55,12 +56,31 @@ echo "Searching for changes since commit [${LAST_COMPLETED_BUILD_SHA:0:7}] ..."
 ## The CircleCI API parameters object
 PARAMETERS='"trigger":false'
 COUNT=0
+
+# Get the list of workflows in current branch for which the CI is currently in failed state
+FAILED_WORKFLOWS=$(cat circle.json \
+  | jq -r "map(select(.branch == \"${CIRCLE_BRANCH}\")) \
+  | group_by(.workflows.workflow_name) \
+  | .[] \
+  | {workflow: .[0].workflows.workflow_name, status: .[0].status} \
+  | select(.status == \"failed\") \
+  | .workflow")
+
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
 
   if [[ -z "$LATEST_COMMIT_SINCE_LAST_BUILD" ]]; then
+    for FAILED_BUILD in ${FAILED_WORKFLOWS[@]}
+    do
+      if [[ $PACKAGE -eq $FAILED_BUILD ]]; then
+        PARAMETERS+=", \"$PACKAGE\":true"
+        COUNT=$((COUNT + 1))
+        echo -e "\e[36m  [+] ${PACKAGE} \e[21m (included because failed since last build)\e[0m"
+      done
+    done
+
     echo -e "\e[90m  [-] $PACKAGE \e[0m"
   else
     PARAMETERS+=", \"$PACKAGE\":true"
@@ -73,6 +93,8 @@ if [[ $COUNT -eq 0 ]]; then
   echo -e "\e[93mNo changes detected in packages. Skip triggering workflows.\e[0m"
   exit 0
 fi
+
+
 
 echo "Changes detected in ${COUNT} package(s)."
 
