@@ -66,22 +66,29 @@ FAILED_WORKFLOWS=$(cat circle.json \
   | select(.status == \"failed\") \
   | .workflow")
 
+echo "Workflows currently in failed status: ${FAILED_WORKFLOWS[@]}"
+
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $CIRCLE_SHA1 ^$LAST_COMPLETED_BUILD_SHA --format=format:%H --full-diff ${PACKAGE_PATH#/})
 
   if [[ -z "$LATEST_COMMIT_SINCE_LAST_BUILD" ]]; then
+    INCLUDED=0
     for FAILED_BUILD in ${FAILED_WORKFLOWS[@]}
     do
-      if [[ $PACKAGE -eq $FAILED_BUILD ]]; then
+      if [[ "$PACKAGE" == "$FAILED_BUILD" ]]; then
+        INCLUDED=1
         PARAMETERS+=", \"$PACKAGE\":true"
         COUNT=$((COUNT + 1))
         echo -e "\e[36m  [+] ${PACKAGE} \e[21m (included because failed since last build)\e[0m"
+        break
       fi
     done
 
-    echo -e "\e[90m  [-] $PACKAGE \e[0m"
+    if [[ "$INCLUDED" == "0" ]]; then
+      echo -e "\e[90m  [-] $PACKAGE \e[0m"
+    fi
   else
     PARAMETERS+=", \"$PACKAGE\":true"
     COUNT=$((COUNT + 1))
