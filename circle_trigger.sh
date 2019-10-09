@@ -78,7 +78,7 @@ do
         PARAMETERS+=", \"$PACKAGE\":true"
         COUNT=$((COUNT + 1))
         echo -e "\e[36m  [+] ${PACKAGE} \e[21m (included because failed since last build)\e[0m"
-      done
+      fi
     done
 
     echo -e "\e[90m  [-] $PACKAGE \e[0m"
