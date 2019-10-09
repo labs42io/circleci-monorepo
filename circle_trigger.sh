@@ -66,7 +66,7 @@ FAILED_WORKFLOWS=$(cat circle.json \
   | select(.status == \"failed\") \
   | .workflow")
 
-echo "Workflows currently in failed status: ${FAILED_WORKFLOWS[@]}"
+echo "Workflows currently in failed status: (${FAILED_WORKFLOWS[@]})."
 
 for PACKAGE in ${PACKAGES[@]}
 do
