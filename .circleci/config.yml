@@ -53,7 +53,8 @@ jobs:
             echo "<< parameters.package_name >> built." > build.txt
       - run:
           name: Build
-          command: echo "Build << parameters.package_name >> ..."
+          # command: echo "Build << parameters.package_name >> ..."
+          command: fail_this
       - persist_to_workspace:
           root: ~/project
           paths:
