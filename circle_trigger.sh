@@ -28,6 +28,7 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   PARENT_BRANCH=master
   for BRANCH in ${TREE[@]}
   do
+    BRANCH=${BRANCH#"origin/"}
     if [[ " ${REMOTE_BRANCHES[@]} " == *" ${BRANCH} "* ]]; then
         echo "Found the parent branch: ${CIRCLE_BRANCH}..${BRANCH}"
         PARENT_BRANCH=$BRANCH
@@ -38,7 +39,10 @@ if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo "Searching for CI builds in branch '${PARENT_BRANCH}' ..."
 
   LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${PARENT_BRANCH}?filter=completed&limit=100&shallow=true"
-  LAST_COMPLETED_BUILD_SHA=`curl -Ss -u "${CIRCLE_TOKEN}:" "${LAST_COMPLETED_BUILD_URL}" | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
+  LAST_COMPLETED_BUILD_SHA=`curl -Ss -u "${CIRCLE_TOKEN}:" "${LAST_COMPLETED_BUILD_URL}" \
+    | jq -r "map(\
+      select(.status == \"success\") | select(.workflows.workflow_name != \"ci\") | select(.build_num < ${CIRCLE_BUILD_NUM})) \
+    | .[0][\"vcs_revision\"]"`
 fi
 
 if [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
