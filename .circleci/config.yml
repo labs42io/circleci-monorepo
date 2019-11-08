@@ -32,7 +32,7 @@ jobs:
       - checkout
       - run:
           name: Trigger workflows
-          command: chmod +x ./circle_trigger.sh && ./circle_trigger.sh
+          command: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
 
   build:
     parameters:
