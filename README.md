@@ -23,7 +23,7 @@ Additionally, it requires use of v2.1 configuration files as well as having [Pip
 
 ## How it works
 Whenever a change is pushed to GIT, by default the `ci` workflow is triggered in CircleCI.  
-The `ci` workflow consist of a single job `trigger-workflows`, which performs a `checkout` and executes the `circle_trigger.sh` bash script from the root of monorepo. The `circle_trigger.sh` bash script is then responsible for detecting which services contain code changes and trigger their corresponding workflow via CircleCI API 2.0.  
+The `ci` workflow consist of a single job `trigger-workflows`, which performs a `checkout` and executes the `circle_trigger.sh` bash script from the `.circleci` folder. The `circle_trigger.sh` bash script is then responsible for detecting which services contain code changes and trigger their corresponding workflow via CircleCI API 2.0.  
 
 By convention, each service is located in a separate directory in `packages`.
 For each service there should be a separate workflow defined in the `workflows` section in `.circleci/config.yml` configuration file. The workflow is matched by the service's name, which is the same as the directory name from `packages`.  
