@@ -5,7 +5,7 @@
 Monorepo brings simplicity to the development process by having all code in one place, but raises the complexity of automated builds and deploy.
 
 For a relatively small monorepo it can be acceptable to have builds run for each service on every change.
-However, if you a have a monorepo with a dozen of services/components, even the smallest change can introduce
+However, if you have a monorepo with a dozen of services/components, even the smallest change can introduce
 big delays in the CI process making it less efficient.
 
 This repository is an example of configuring CircleCI for a monorepo that has four services.
