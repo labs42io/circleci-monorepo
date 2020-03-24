@@ -12,7 +12,7 @@ CIRCLE_API="https://circleci.com/api"
 ############################################
 LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=100&shallow=true"
 curl -Ss -u ${CIRCLE_TOKEN}: ${LAST_COMPLETED_BUILD_URL} > circle.json
-LAST_COMPLETED_BUILD_SHA=`cat circle.json | jq -r '.[0]["vcs_revision"]'`
+LAST_COMPLETED_BUILD_SHA=`cat circle.json | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
 
 if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mThere are no completed CI builds in branch ${CIRCLE_BRANCH}.\e[0m"
@@ -104,8 +104,6 @@ if [[ $COUNT -eq 0 ]]; then
   echo -e "\e[93mNo changes detected in packages. Skip triggering workflows.\e[0m"
   exit 0
 fi
-
-
 
 echo "Changes detected in ${COUNT} package(s)."
 
