@@ -11,7 +11,8 @@ CIRCLE_API="https://circleci.com/api"
 ## 1. Commit SHA of last CI build
 ############################################
 LAST_COMPLETED_BUILD_URL="${CIRCLE_API}/v1.1/project/${REPOSITORY_TYPE}/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/tree/${CIRCLE_BRANCH}?filter=completed&limit=100&shallow=true"
-LAST_COMPLETED_BUILD_SHA=`curl -Ss -u "${CIRCLE_TOKEN}:" "${LAST_COMPLETED_BUILD_URL}" | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
+curl -Ss -u ${CIRCLE_TOKEN}: ${LAST_COMPLETED_BUILD_URL} > circle.json
+LAST_COMPLETED_BUILD_SHA=`cat circle.json | jq -r 'map(select(.status == "success") | select(.workflows.workflow_name != "ci")) | .[0]["vcs_revision"]'`
 
 if  [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]]; then
   echo -e "\e[93mThere are no completed CI builds in branch ${CIRCLE_BRANCH}.\e[0m"
@@ -59,13 +60,39 @@ echo "Searching for changes since commit [${LAST_COMPLETED_BUILD_SHA:0:7}] ..."
 ## The CircleCI API parameters object
 PARAMETERS='"trigger":false'
 COUNT=0
+
+# Get the list of workflows in current branch for which the CI is currently in failed state
+FAILED_WORKFLOWS=$(cat circle.json \
+  | jq -r "map(select(.branch == \"${CIRCLE_BRANCH}\")) \
+  | group_by(.workflows.workflow_name) \
+  | .[] \
+  | {workflow: .[0].workflows.workflow_name, status: .[0].status} \
+  | select(.status == \"failed\") \
+  | .workflow")
+
+echo "Workflows currently in failed status: (${FAILED_WORKFLOWS[@]})."
+
 for PACKAGE in ${PACKAGES[@]}
 do
   PACKAGE_PATH=${ROOT#.}/$PACKAGE
   LATEST_COMMIT_SINCE_LAST_BUILD=$(git log -1 $LAST_COMPLETED_BUILD_SHA..$CIRCLE_SHA1 --format=format:%H --full-diff ${PACKAGE_PATH#/})
 
   if [[ -z "$LATEST_COMMIT_SINCE_LAST_BUILD" ]]; then
-    echo -e "\e[90m  [-] $PACKAGE \e[0m"
+    INCLUDED=0
+    for FAILED_BUILD in ${FAILED_WORKFLOWS[@]}
+    do
+      if [[ "$PACKAGE" == "$FAILED_BUILD" ]]; then
+        INCLUDED=1
+        PARAMETERS+=", \"$PACKAGE\":true"
+        COUNT=$((COUNT + 1))
+        echo -e "\e[36m  [+] ${PACKAGE} \e[21m (included because failed since last build)\e[0m"
+        break
+      fi
+    done
+
+    if [[ "$INCLUDED" == "0" ]]; then
+      echo -e "\e[90m  [-] $PACKAGE \e[0m"
+    fi
   else
     PARAMETERS+=", \"$PACKAGE\":true"
     COUNT=$((COUNT + 1))
