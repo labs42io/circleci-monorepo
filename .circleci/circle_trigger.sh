@@ -48,7 +48,7 @@ fi
 
 if [[ ${LAST_COMPLETED_BUILD_SHA} == "null" ]] || [[ $(git cat-file -t $LAST_COMPLETED_BUILD_SHA) != "commit" ]]; then
   echo -e "\e[93mNo CI builds for branch ${PARENT_BRANCH}. Using master.\e[0m"
-  LAST_COMPLETED_BUILD_SHA=master
+  LAST_COMPLETED_BUILD_SHA=$(git rev-parse origin/master)
 fi
 
 ############################################
