@@ -45,6 +45,24 @@ jobs:
           paths:
             - packages/<< parameters.package_name >>
 
+  lint:
+    parameters:
+      package_name:
+        type: string
+
+    executor: node
+    working_directory: ~/project/packages/<< parameters.package_name >>
+
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Download linter
+          command: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.27.0
+      - run:
+          name: Lint
+          command: golangci-lint run ./...
+
   test:
     parameters:
       package_name:
@@ -126,11 +144,16 @@ workflows:
       - checkout:
           name: messenger-server-checkout
           package_name: messenger-server
+      - checkout:
+          name: messenger-server-lint
+          package_name: messenger-server
+          requires:
+            - messenger-server-checkout
       - test:
           name: messenger-server-test
           package_name: messenger-server
           requires:
-            - messenger-server-checkout
+            - messenger-server-lint
       - build:
           name: messenger-server-build
           package_name: messenger-server
@@ -149,11 +172,16 @@ workflows:
       - checkout:
           name: messenger-client-cli-checkout
           package_name: messenger-client-cli
+      - lint:
+          name: messenger-client-cli-lint
+          package_name: messenger-client-cli
+          requires:
+            - messenger-client-cli-checkout
       - test:
           name: messenger-client-cli-test
           package_name: messenger-client-cli
           requires:
-            - messenger-client-cli-checkout
+            - messenger-client-cli-lint
       - build:
           name: messenger-client-cli-build
           package_name: messenger-client-cli
