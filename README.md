@@ -1,6 +1,6 @@
 # CircleCI monorepo
 
-[![CircleCI](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master.svg?style=svg)](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master)
+[![CircleCI](https://circleci.com/gh/ankur22/godzilla/tree/master.svg?style=svg)](https://circleci.com/gh/ankur22/godzilla/tree/master)
 
 Monorepo brings simplicity to the development process by having all code in one place, but raises the complexity of automated builds and deploy.
 
