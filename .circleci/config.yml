@@ -124,7 +124,7 @@ workflows:
     when: << pipeline.parameters.messenger-server >>
     jobs:
       - checkout:
-          name: messenger-server-test
+          name: messenger-server-checkout
           package_name: messenger-server
       - test:
           name: messenger-server-test
@@ -147,7 +147,7 @@ workflows:
     when: << pipeline.parameters.messenger-client-cli >>
     jobs:
       - checkout:
-          name: messenger-client-cli-test
+          name: messenger-client-cli-checkout
           package_name: messenger-client-cli
       - test:
           name: messenger-client-cli-test
