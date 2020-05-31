@@ -28,6 +28,23 @@ jobs:
           name: Trigger workflows
           command: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
 
+  checkout:
+    parameters:
+      package_name:
+        type: string
+
+    executor: node
+    working_directory: ~/project/packages/<< parameters.package_name >>
+
+    steps:
+      - checkout:
+          path: ~/project
+      # This step is added only to show that we are in the package directory
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - packages/<< parameters.package_name >>
+
   test:
     parameters:
       package_name:
@@ -55,9 +72,9 @@ jobs:
     working_directory: ~/project/packages/<< parameters.package_name >>
 
     steps:
-      - checkout:
-          path: ~/project
-      # This step is added only to show that we are in the package directory
+      - attach_workspace:
+          at: ~/project
+      # This step is added to show that files are available from the build job. 
       - run:
           name: Content 
           command: |
@@ -106,9 +123,14 @@ workflows:
   messenger-server:
     when: << pipeline.parameters.messenger-server >>
     jobs:
+      - checkout:
+          name: messenger-server-test
+          package_name: messenger-server
       - test:
           name: messenger-server-test
           package_name: messenger-server
+          requires:
+            - messenger-server-checkout
       - build:
           name: messenger-server-build
           package_name: messenger-server
@@ -124,9 +146,14 @@ workflows:
   messenger-client-cli:
     when: << pipeline.parameters.messenger-client-cli >>
     jobs:
+      - checkout:
+          name: messenger-client-cli-test
+          package_name: messenger-client-cli
       - test:
           name: messenger-client-cli-test
           package_name: messenger-client-cli
+          requires:
+            - messenger-client-cli-checkout
       - build:
           name: messenger-client-cli-build
           package_name: messenger-client-cli
