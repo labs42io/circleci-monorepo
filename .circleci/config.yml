@@ -67,8 +67,7 @@ jobs:
       # This step is added to show that files are available from the build job. 
       - run:
           name: Content to test
-          command: echo "Run tests << parameters.package_name >> ..."
-          command: go test -v -trimpath -race -vet all ./...
+          command: echo "Run tests << parameters.package_name >> ..." && go test -v -trimpath -race -vet all ./...
 
   deploy:
     parameters:
