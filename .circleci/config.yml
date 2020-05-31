@@ -28,9 +28,27 @@ jobs:
           name: Trigger workflows
           command: chmod +x .circleci/circle_trigger.sh && .circleci/circle_trigger.sh
 
+  test:
+    parameters:
+      package_name:
+        type: string
+
+    executor: node
+    working_directory: ~/project/packages/<< parameters.package_name >>
+
+    steps:
+      - attach_workspace:
+          at: ~/project
+      # This step is added to show that files are available from the build job. 
+      - run:
+          name: Content to test
+          command: echo "Run tests << parameters.package_name >> ..." && go test -v -trimpath -race -vet all ./...
+
   build:
     parameters:
       package_name:
+        type: string
+      main_path:
         type: string
 
     executor: node
@@ -47,27 +65,11 @@ jobs:
             echo "<< parameters.package_name >> built." > build.txt
       - run:
           name: Build
-          command: echo "Build << parameters.package_name >> ..."
+          command: echo "Build << parameters.package_name >> ..." && CGO_ENABLED=0 go build -o ./app << parameters.main_path >>
       - persist_to_workspace:
           root: ~/project
           paths:
             - packages/<< parameters.package_name >>
-
-  test:
-    parameters:
-      package_name:
-        type: string
-
-    executor: node
-    working_directory: ~/project/packages/<< parameters.package_name >>
-
-    steps:
-      - attach_workspace:
-          at: ~/project
-      # This step is added to show that files are available from the build job. 
-      - run:
-          name: Content to test
-          command: echo "Run tests << parameters.package_name >> ..." && go test -v -trimpath -race -vet all ./...
 
   deploy:
     parameters:
@@ -104,14 +106,15 @@ workflows:
   messenger-server:
     when: << pipeline.parameters.messenger-server >>
     jobs:
-      - build:
-          name: messenger-server-build
-          package_name: messenger-server
       - test:
           name: messenger-server-test
           package_name: messenger-server
+      - build:
+          name: messenger-server-build
+          package_name: messenger-server
+          main_path: ./cmd/server
           requires:
-            - messenger-server-build
+            - messenger-server-test
       - deploy:
           name: messenger-server-deploy
           package_name: messenger-server
@@ -121,14 +124,15 @@ workflows:
   messenger-client-cli:
     when: << pipeline.parameters.messenger-client-cli >>
     jobs:
-      - build:
-          name: messenger-client-cli-build
-          package_name: messenger-client-cli
       - test:
           name: messenger-client-cli-test
           package_name: messenger-client-cli
+      - build:
+          name: messenger-client-cli-build
+          package_name: messenger-client-cli
+          main_path: ./cmd/cli
           requires:
-            - messenger-client-cli-build
+            - messenger-client-cli-test
       - deploy:
           name: messenger-client-cli-deploy
           package_name: messenger-client-cli
