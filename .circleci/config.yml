@@ -141,7 +141,7 @@ workflows:
           name: messenger-server-deploy
           package_name: messenger-server
           requires:
-            - messenger-server-test
+            - messenger-server-build
 
   messenger-client-cli:
     when: << pipeline.parameters.messenger-client-cli >>
@@ -164,4 +164,4 @@ workflows:
           name: messenger-client-cli-deploy
           package_name: messenger-client-cli
           requires:
-            - messenger-client-cli-test
+            - messenger-client-cli-build
