@@ -17,7 +17,7 @@ parameters:
 executors:
   node:
     docker:
-      - image: circleci/node
+      - image: circleci/golang:1.14.3
 
 jobs:
   trigger-workflows:
@@ -52,6 +52,23 @@ jobs:
           root: ~/project
           paths:
             - packages/<< parameters.package_name >>
+
+  test:
+    parameters:
+      package_name:
+        type: string
+
+    executor: node
+    working_directory: ~/project/packages/<< parameters.package_name >>
+
+    steps:
+      - attach_workspace:
+          at: ~/project
+      # This step is added to show that files are available from the build job. 
+      - run:
+          name: Content to test
+          command: echo "Run tests << parameters.package_name >> ..."
+          command: go test -v -trimpath -race -vet all ./...
 
   deploy:
     parameters:
@@ -91,11 +108,16 @@ workflows:
       - build:
           name: messenger-server-build
           package_name: messenger-server
+      - test:
+        name: messenger-server-test
+        package_name: messenger-server
+        requires:
+          - messenger-server-build
       - deploy:
           name: messenger-server-deploy
           package_name: messenger-server
           requires:
-            - messenger-server-build
+            - messenger-server-test
 
   messenger-client-cli:
     when: << pipeline.parameters.messenger-client-cli >>
@@ -103,8 +125,13 @@ workflows:
       - build:
           name: messenger-client-cli-build
           package_name: messenger-client-cli
+      - test:
+        name: messenger-client-cli-test
+        package_name: messenger-client-cli
+        requires:
+          - messenger-client-cli-build
       - deploy:
           name: messenger-client-cli-deploy
           package_name: messenger-client-cli
           requires:
-            - messenger-client-cli-build
+            - messenger-client-cli-test
