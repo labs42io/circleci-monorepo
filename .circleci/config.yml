@@ -7,16 +7,10 @@ parameters:
     default: true
 
   # A parameter per package
-  api:
+  messenger-server:
     type: boolean
     default: false
-  app:
-    type: boolean
-    default: false
-  auth:
-    type: boolean
-    default: false
-  gateway:
+  messenger-client-cli:
     type: boolean
     default: false
 
@@ -91,50 +85,26 @@ workflows:
 
   # Workflows defined for each package.
 
-  api:
-    when: << pipeline.parameters.api >>
+  messenger-server:
+    when: << pipeline.parameters.messenger-server >>
     jobs:
       - build:
-          name: api-build
-          package_name: api
+          name: messenger-server-build
+          package_name: messenger-server
       - deploy:
-          name: api-deploy
-          package_name: api
+          name: messenger-server-deploy
+          package_name: messenger-server
           requires:
-            - api-build
+            - messenger-server-build
 
-  app:
-    when: << pipeline.parameters.app >>
+  messenger-client-cli:
+    when: << pipeline.parameters.messenger-client-cli >>
     jobs:
       - build:
-          name: app-build
-          package_name: app
+          name: messenger-client-cli-build
+          package_name: messenger-client-cli
       - deploy:
-          name: app-deploy
-          package_name: app
+          name: messenger-client-cli-deploy
+          package_name: messenger-client-cli
           requires:
-            - app-build
-
-  auth:
-    when: << pipeline.parameters.auth >>
-    jobs:
-      - build:
-          name: auth-build
-          package_name: auth
-      - deploy:
-          name: auth-deploy
-          package_name: auth
-          requires:
-            - auth-build
-
-  gateway:
-    when: << pipeline.parameters.gateway >>
-    jobs:
-      - build:
-          name: gateway-build
-          package_name: gateway
-      - deploy:
-          name: gateway-deploy
-          package_name: gateway
-          requires:
-            - gateway-build
+            - messenger-client-cli-build

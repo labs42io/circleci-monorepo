@@ -1,5 +1,7 @@
 # Godzilla
 
+[![CircleCI](https://circleci.com/gh/ankur22/godzilla/tree/master.svg?style=svg)](https://circleci.com/gh/ankur22/godzilla/tree/master)
+
 This is a monorepo which contains Go code for a messenger service. This repo is a playground where I will be playing around with the following:
 
  - Playing around with monorepos
@@ -30,8 +32,6 @@ The following is the contents of the readme that was from the forked project. I 
 ---
 
 # CircleCI monorepo
-
-[![CircleCI](https://circleci.com/gh/ankur22/godzilla/tree/master.svg?style=svg)](https://circleci.com/gh/ankur22/godzilla/tree/master)
 
 Monorepo brings simplicity to the development process by having all code in one place, but raises the complexity of automated builds and deploy.
 
