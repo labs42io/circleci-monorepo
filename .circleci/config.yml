@@ -127,6 +127,8 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
+            echo $IMAGE_NAME
+            echo $TAG
             docker build -t ankura22/$IMAGE_NAME:$TAG .
             echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
             docker push ankura22/$IMAGE_NAME:$TAG
