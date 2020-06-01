@@ -18,9 +18,6 @@ executors:
   node:
     docker:
       - image: circleci/golang:1.14.3
-  node2:
-    docker:
-      - image: docker:latest
 
 jobs:
   trigger-workflows:
@@ -114,6 +111,8 @@ jobs:
       package_name:
         type: string
 
+    docker:
+      - image: docker:latest
     executor: node
     working_directory: ~/project/packages/<< parameters.package_name >>
 
