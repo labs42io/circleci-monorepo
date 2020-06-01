@@ -18,6 +18,9 @@ executors:
   node:
     docker:
       - image: circleci/golang:1.14.3
+  node2:
+    docker:
+      - image: docker:latest
 
 jobs:
   trigger-workflows:
@@ -117,11 +120,6 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/project
-      - run:
-          name: Install Docker
-          command: |
-            curl -fsSL https://get.docker.com -o get-docker.sh
-            sudo sh get-docker.sh
       - run:
           name: Setup Env Vars
           command: |
