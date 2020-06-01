@@ -106,7 +106,7 @@ jobs:
           paths:
             - packages/<< parameters.package_name >>
 
-  docker-build-publish:
+  publish:
     parameters:
       package_name:
         type: string
@@ -184,8 +184,8 @@ workflows:
           main_path: ./cmd/server
           requires:
             - messenger-server-test
-      - docker-build-publish:
-          name: messenger-server-docker-build-publish
+      - publish:
+          name: messenger-server-publish
           package_name: messenger-server
           main_path: ./cmd/server
           requires:
@@ -194,7 +194,7 @@ workflows:
           name: messenger-server-deploy
           package_name: messenger-server
           requires:
-            - messenger-server-docker-build-publish
+            - messenger-server-publish
 
   messenger-client-cli:
     when: << pipeline.parameters.messenger-client-cli >>
