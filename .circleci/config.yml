@@ -120,12 +120,8 @@ jobs:
       - run:
           name: Install Docker
           command: |
-            sudo apt-get install apt-transport-https ca-certificates curl gnupg2 software-properties-common
-            curl -fsSL https://download.docker.com/linux/debian/gpg | sudo apt-key add -
-            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian buster stable"
-            sudo apt-get update
-            sudo apt-get install docker-ce
-            sudo systemctl status docker
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
       - run:
           name: Setup Env Vars
           command: |
