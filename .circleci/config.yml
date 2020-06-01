@@ -125,6 +125,7 @@ jobs:
             sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian buster stable"
             sudo apt-get update
             sudo apt-get install docker-ce
+            sudo systemctl status docker
       - run:
           name: Setup Env Vars
           command: |
@@ -133,9 +134,9 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
-            docker build -t ankura22/$IMAGE_NAME:$TAG .
-            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
-            docker push ankura22/$IMAGE_NAME:$TAG
+            sudo docker build -t ankura22/$IMAGE_NAME:$TAG .
+            echo $DOCKER_PWD | sudo docker login -u $DOCKER_LOGIN --password-stdin
+            sudo docker push ankura22/$IMAGE_NAME:$TAG
 
   deploy:
     parameters:
