@@ -127,9 +127,9 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
-            sudo docker build -t ankura22/$IMAGE_NAME:$TAG .
-            echo $DOCKER_PWD | sudo docker login -u $DOCKER_LOGIN --password-stdin
-            sudo docker push ankura22/$IMAGE_NAME:$TAG
+            docker build -t ankura22/$IMAGE_NAME:$TAG .
+            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+            docker push ankura22/$IMAGE_NAME:$TAG
 
   deploy:
     parameters:
