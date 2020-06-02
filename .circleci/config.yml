@@ -116,8 +116,8 @@ jobs:
     executor: node
     working_directory: ~/project/packages/<< parameters.package_name >>
 
+    machine: true
     steps:
-      machine: true
       - attach_workspace:
           at: ~/project
       - run:
