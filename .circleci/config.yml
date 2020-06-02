@@ -120,7 +120,7 @@ jobs:
       - run:
           name: Build and push Docker image
           command: |
-            export TAG=0.1.$CIRCLE_BUILD_NUM
+            export TAG=$(cat version.txt)-$CIRCLE_BUILD_NUM
             export IMAGE_NAME=<< parameters.package_name >>
             docker build -t ankura22/$IMAGE_NAME:$TAG .
             echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
