@@ -112,7 +112,7 @@ jobs:
         type: string
 
     docker:
-      - image: docker:latest
+      - image: bayesimpact/circleci
     executor: node
     working_directory: ~/project/packages/<< parameters.package_name >>
 
