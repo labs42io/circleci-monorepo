@@ -123,6 +123,8 @@ jobs:
             export TAG=0.1.$CIRCLE_BUILD_NUM
             export IMAGE_NAME=<< parameters.package_name >>
             docker build -t ankura22/$IMAGE_NAME:$TAG .
+            echo $DOCKER_PWD | docker login -u $DOCKER_LOGIN --password-stdin
+            docker push ankura22/$IMAGE_NAME:$TAG
 
   deploy:
     parameters:
@@ -161,22 +163,22 @@ workflows:
       - checkout:
           name: messenger-server-checkout
           package_name: messenger-server
-      # - lint:
-      #     name: messenger-server-lint
-      #     package_name: messenger-server
-      #     requires:
-      #       - messenger-server-checkout
-      # - test:
-      #     name: messenger-server-test
-      #     package_name: messenger-server
-      #     requires:
-      #       - messenger-server-lint
+      - lint:
+          name: messenger-server-lint
+          package_name: messenger-server
+          requires:
+            - messenger-server-checkout
+      - test:
+          name: messenger-server-test
+          package_name: messenger-server
+          requires:
+            - messenger-server-lint
       - build:
           name: messenger-server-build
           package_name: messenger-server
           main_path: ./cmd/server
           requires:
-            - messenger-server-checkout
+            - messenger-server-test
       - docker-build-publish:
           name: messenger-server-docker-build-publish
           package_name: messenger-server
