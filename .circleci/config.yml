@@ -111,8 +111,6 @@ jobs:
       package_name:
         type: string
 
-    docker:
-      - image: docker:latest
     executor: node
     working_directory: ~/project/packages/<< parameters.package_name >>
 
