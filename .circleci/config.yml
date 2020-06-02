@@ -111,7 +111,6 @@ jobs:
       package_name:
         type: string
 
-    executor: node
     working_directory: ~/project/packages/<< parameters.package_name >>
 
     machine: true
