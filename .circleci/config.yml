@@ -112,13 +112,14 @@ jobs:
         type: string
 
     docker:
-      - image: bayesimpact/circleci
+      - image: docker:latest
     executor: node
     working_directory: ~/project/packages/<< parameters.package_name >>
 
     steps:
       - attach_workspace:
           at: ~/project
+      - type: setup-docker-engine
       - run:
           name: Build and push Docker image
           command: |
