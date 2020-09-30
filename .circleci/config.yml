@@ -20,6 +20,7 @@ parameters:
     type: boolean
     default: false
 
+  # Custom parameters
   deploy:
     type: boolean
     default: false
