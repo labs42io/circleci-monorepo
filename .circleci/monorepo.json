@@ -5,6 +5,6 @@
     "api": ["packages/api/"],
     "app": ["packages/app/"],
     "auth": ["packages/auth/"],
-    "core": ["packages/gateway/", ":!packages/gateway/*.md"]
+    "gateway": ["packages/gateway/", ":!packages/gateway/*.md"]
   }
 }
