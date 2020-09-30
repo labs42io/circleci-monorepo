@@ -46,7 +46,7 @@ jobs:
             # (optional) add MONOREPO_DEBUG for additional debug information
             MONOREPO_DEBUG: "true"
             # (optional) add JSON text CI_PARAMETERS for a list of additional CI parameters to include
-            CI_PARAMETERS: '{ "deploy:": true }'
+            CI_PARAMETERS: '{ "deploy": true }'
 
   build:
     parameters:
