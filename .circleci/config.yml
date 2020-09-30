@@ -31,11 +31,15 @@ jobs:
     steps:
       - checkout
       - run:
+          # This step is added to demonstrate the possibility to dynamically set the user token 
+          name: Set token
+          command: echo "export CIRCLE_USER_TOKEN=${CIRCLE_TOKEN}" >> $BASH_ENV
+      - run:
           name: Trigger workflows
           command: chmod +x .circleci/monorepo.sh && .circleci/monorepo.sh
           environment:
+            # Add this for additional debug information
             MONOREPO_DEBUG: "true"
-            CIRCLE_USER_TOKEN: ${CIRCLE_TOKEN}
 
   build:
     parameters:
