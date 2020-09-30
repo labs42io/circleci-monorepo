@@ -20,6 +20,10 @@ parameters:
     type: boolean
     default: false
 
+  deploy:
+    type: boolean
+    default: false
+
 executors:
   node:
     docker:
@@ -38,8 +42,10 @@ jobs:
           name: Trigger workflows
           command: chmod +x .circleci/monorepo.sh && .circleci/monorepo.sh
           environment:
-            # Add this for additional debug information
+            # (optional) add MONOREPO_DEBUG for additional debug information
             MONOREPO_DEBUG: "true"
+            # (optional) add JSON text CI_PARAMETERS for a list of additional CI parameters to include
+            CI_PARAMETERS: '{ "deploy:": true }'
 
   build:
     parameters:
@@ -83,7 +89,7 @@ jobs:
           command: ls && cat build.txt
       - deploy:
           name: Deploy
-          command: echo "Deploying << parameters.package_name >> ..."
+          command: echo "Deploying << parameters.package_name >> (<< pipeline.parameters.deploy >>) ..."
 
 workflows:
   version: 2
