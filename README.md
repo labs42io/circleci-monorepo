@@ -2,6 +2,18 @@
 
 [![CircleCI](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master.svg?style=svg)](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master)
 
+> **UPDATE**  
+> There is a new *experimental* script in branch [`v2`](https://github.com/labs42io/circleci-monorepo/tree/v2) that has the following improvements: 
+> - Improved calculation of base commit for new branches that takes into account also the history of past CI builds. Current script doesn't identify correctly the parent when creating new branches from merge commits.
+> - Improved diff calculation using the two-dot *git diff* command.
+> - Improved calculation of CI workflow status that considers success when all jobs succeeds. Current script considers a workflow successful when at least one job succeeds. 
+> - Possibility to customize the list of packages with advanced path specifications, that allows to list multiple paths for each package as well as exclude certain paths. 
+> - Possibility to provide additional custom pipeline parameters.
+> - Possibility to customize the number of API pages with jobs to get from CircleCI. Existing script takes only the first page with 100 jobs.
+>   
+> The new script is planned to be published as CircleCI orb to allow for easier integration.
+
+
 Monorepo brings simplicity to the development process by having all code in one place, but raises the complexity of automated builds and deploy.
 
 For a relatively small monorepo it can be acceptable to have builds run for each service on every change.
