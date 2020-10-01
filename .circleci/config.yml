@@ -44,9 +44,9 @@ jobs:
           name: Trigger workflows
           command: chmod +x .circleci/monorepo.sh && .circleci/monorepo.sh
           environment:
-            # (optional) add MONOREPO_DEBUG for additional debug information
+            # (optional) print additional debug information
             MONOREPO_DEBUG: "true"
-            # (optional) add JSON text CI_PARAMETERS for a list of additional CI parameters to include
+            # (optional) additional CI parameters to include in the pipeline (must be a valid JSON)
             CI_PARAMETERS: '{ "deploy": true }'
 
   build:

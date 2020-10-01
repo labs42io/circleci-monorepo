@@ -6,7 +6,7 @@ This repository is an example of configuring CircleCI for a monorepo that has fo
 The CircleCI configuration file has workflows defined per each service, that are triggered on every push only when the corresponding service has code changes.
 
 The sample services/packages are `api`, `app`, `auth` and `gateway` all located in the subdirectory `packages/`.
-For each service a CircleCI workflow defined in `.circleci/config.yml` file.
+For each service a CircleCI workflow is defined in `.circleci/config.yml` file.
 
 
 ## Important Disclaimer
@@ -16,12 +16,9 @@ This repository relies on CircleCI API v2 changes which are currently in [Previe
 Additionally, it requires use of v2.1 configuration files as well as having [Pipelines](https://circleci.com/docs/2.0/build-processing/) enabled.
 
 ## How it works
-Whenever a change is pushed to GIT, by default the `ci` workflow is triggered in CircleCI.
+Whenever a change is pushed to GIT, a default `ci` workflow is triggered in CircleCI.
 The `ci` workflow consists of a single job `trigger-workflows`, which performs a `checkout` and executes the `.circleci/monorepo.sh` bash script.
-The `monorepo.sh` script is then responsible for detecting which packages was changed and trigger their corresponding workflows via CircleCI API 2.0.
-
-By default, each service is expected to be located in a separate directory in `packages/`.
-For each service there should be a separate workflow defined in the `workflows` section in `.circleci/config.yml` configuration file. The workflow is conditioned by the `when` option which depends on a pipeline parameter with the same name as the package directory name.
+The `monorepo.sh` script is then responsible for detecting which packages were changed and trigger their corresponding workflows via CircleCI API v2.0.
 
 ### Diff changes
 
@@ -41,10 +38,9 @@ A---B---C---D (master branch)
 </pre>
 
 Suppose in above example a feature branch has been created from *master* branch. The commit `E` was pushed in feature branch with changes in package `P1`. 
-In this case this branch is new and there are no commits for `P1`. The base SHA for diff is considered commit `B` as it is seen as the commit from which 
-the feature branch was created. `P1` workflow only is triggered.  
+In this case this branch is new and there are no commits for `P1`. The base SHA for diff is considered commit `B` as it is the first commit common to both, feature branch and the master branch. `P1` workflow ONLY is triggered, as there are no diff changes for other packages since commit `B`.  
 Now, let's say we push additional commit `F` with changes in package `P1` and `P2`. For `P1` there is commit `E` in current branch that has a passed CI workflow and
-it is used as a base for diff. For `P2` as in the previous case, the base commit for diff is considered `B`.  
+therefore it is used as a diff base. For `P2` as in the previous case, the diff base is considered commit `B`.  
  
 Now let's consider a more complex example.
 
@@ -57,17 +53,17 @@ A---B---C---D (master branch)
 </pre>
 
 In this example we have two feature branches `F1` and `F2`. Let's say feature branch `F2` was first pushed with commit `H`.
-Later, feature branch `F1` was merged into `F2` with merge commit `J`. When triggering the pipeline at commit `J`, the workflows fo which there are
+Later, feature branch `F1` was merged into `F2` with merge commit `J`. When triggering the pipeline at commit `J`, the workflows for which there are
 builds in current branch will consider that commit as a diff base. For workflows that are new, commit `A` is considered as a diff base because
-it is common to current branch and `master`, and is prior to commit `H` which is the first commit in current branch.
+it is common to current branch and `master`, and is prior to commit `H` which is the first pushed commit in current branch.
 
 
 ## Setup
 
 ### Personal API token
-To be able to trigger workflows via CircleCI API, you need a CircleCI [personal API token](https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token).
+To be able to trigger workflows via CircleCI API, you need a [personal API token](https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token).
 The `monorepo.sh` script expects to find the token in `CIRCLE_USER_TOKEN` environment variable.
-To prevent having the tokens published to git, you can use [project environment variables](https://circleci.com/docs/2.0/env-vars/#setting-an-environment-variable-in-a-project) or [contexts](https://circleci.com/docs/2.0/contexts/).
+To prevent having the tokens published to git, use [project environment variables](https://circleci.com/docs/2.0/env-vars/#setting-an-environment-variable-in-a-project) or [contexts](https://circleci.com/docs/2.0/contexts/).
 
 ### Trigger script configurations
 
@@ -110,7 +106,7 @@ Example:
 Explanation:  
 The `auth` package is triggered for any change in `packages/auth/` directory.  
 The `api` package is configured to be triggered whenever any `.js` file is changed in `packages/api/` directory, at any level.  
-The `app` package is configured to be triggered to any change in `packages/app/` directory, but ignores any changes in `*.md` files.  
+The `app` package is configured to be triggered on any change in `packages/app/` directory, but ignores the changes from `*.md` files.  
 
 The list of paths for each package are provided as is to the `git diff` command when calculating changes between two commits. 
 See [pathspec](https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddefpathspecapathspec) documentation for a list
@@ -132,11 +128,11 @@ Example:
 }
 ```
 This will load the latest *300* jobs in the current branch. Note that for each page a CircleCI API call is executed.  
-Customizing the number of pages to load might be useful when repository contains lots of packages and/or workflows are complex and consist of many more jobs.
+Customizing the number of pages to load might be useful when the repository contains lots of packages and/or workflows are complex and consist of many more jobs.
 
 ### CircleCI config.yml changes
 
-#### Configuring the trigger workflow 
+#### Configure the trigger workflow 
 
 To configure the trigger workflow follow the steps:
 
@@ -191,12 +187,12 @@ parameters:
 
 Now, define a package workflow that is conditioned to be triggered only on corresponding changes:  
 
-- In `.circleci/config.yml` configuration file in `jobs` section define all the jobs that are need by current service/component.
-To set the job's working directory to the directory of the service, you can use job parameter:
 
 ```yaml
 workflows:
-  when: << pipeline.parameters.app >>
+  ...
+  api:
+    when: << pipeline.parameters.api >>
     jobs:
       ...
 ```
