@@ -2,17 +2,11 @@
 
 [![CircleCI](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master.svg?style=svg)](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master)
 
-Monorepo brings simplicity to the development process by having all code in one place, but raises the complexity of automated builds and deploy.
-
-For a relatively small monorepo it can be acceptable to have builds run for each service on every change.
-However, if you have a monorepo with a dozen of services/components, even the smallest change can introduce
-big delays in the CI process making it less efficient.
-
 This repository is an example of configuring CircleCI for a monorepo that has four services.
 The CircleCI configuration file has workflows defined per each service, that are triggered on every push only when the corresponding service has code changes.
 
-The sample services/components are `api`, `app`, `auth` and `gateway` all located in the subdirectory `/packages`.
-For each service a CircleCI workflow with the same name is defined in `.circleci/config.yml` file.
+The sample services/packages are `api`, `app`, `auth` and `gateway` all located in the subdirectory `packages/`.
+For each service a CircleCI workflow defined in `.circleci/config.yml` file.
 
 
 ## Important Disclaimer
@@ -23,103 +17,188 @@ Additionally, it requires use of v2.1 configuration files as well as having [Pip
 
 ## How it works
 Whenever a change is pushed to GIT, by default the `ci` workflow is triggered in CircleCI.
-The `ci` workflow consist of a single job `trigger-workflows`, which performs a `checkout` and executes the `circle_trigger.sh` bash script from the `.circleci` folder. The `circle_trigger.sh` bash script is then responsible for detecting which services contain code changes and trigger their corresponding workflow via CircleCI API 2.0.
+The `ci` workflow consists of a single job `trigger-workflows`, which performs a `checkout` and executes the `.circleci/monorepo.sh` bash script.
+The `monorepo.sh` script is then responsible for detecting which packages was changed and trigger their corresponding workflows via CircleCI API 2.0.
 
-By convention, each service is located in a separate directory in `packages`.
-For each service there should be a separate workflow defined in the `workflows` section in `.circleci/config.yml` configuration file. The workflow is matched by the service's name, which is the same as the directory name from `packages`.
+By default, each service is expected to be located in a separate directory in `packages/`.
+For each service there should be a separate workflow defined in the `workflows` section in `.circleci/config.yml` configuration file. The workflow is conditioned by the `when` option which depends on a pipeline parameter with the same name as the package directory name.
 
-Each workflow is conditioned using a `when` clause, that depends on a pipeline parameter. The name of the parameter is the same as the name of the service.
+### Diff changes
 
-### Change detection
-Each workflow that corresponds to a service is triggered only when there are code changes in the corresponding service directory.
-Below is a more detailed explanation of how it detects changes:
+The workflows are triggered based on calculated changes. The changes for each package are calculated according to following algorithm:
 
-- The first step consists of finding the commit SHA of the changes for which the most recently CircleCI pipeline was triggered
-  - Firstly it attempts to get the latest completed CircleCI workflow for current branch (together with the commit SHA)
-  - If there are no builds for current branch (which is usually the case with feature branches),
-    it looks for nearest parent branch and gets its commit SHA (using this [solution](https://gist.github.com/joechrysler/6073741))
-  - If there are no builds for parent branch then it uses `master`
-- Once it has the commit SHA of latest CircleCI workflow, it uses `git log` to list all changes between the two commits and flag those services for which changes are found in their directories.
+- **Pushes for which the package has successful workflows in current branch:** A two-dot diff compares the head and the SHA of the latest successful workflow.
+- **Pushes to new branches:** A two-dot diff compares the head and the SHA of the latest commit that:
+  - is also part of the history of another branch 
+  - is prior to any other commits from the current branch for which a CI was run.
 
-## Before you start
-To be able to trigger workflows via API, you need a CircleCI [personal API token](https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token).
-The `circle_trigger.sh` script expects to find the token in `CIRCLE_TOKEN` environment variable.
-To prevent having the tokens published to git, you can use [project environment variables](https://circleci.com/docs/2.0/env-vars/#setting-an-environment-variable-in-a-project).
+**Examples**
 
-## How to configure new services/components
-Once you add a new service/component to your monorepo you have to do the following steps:
+<pre>
+A---B---C---D (master branch)  
+     \
+      E---F (feature branch)
+</pre>
 
-- Add a directory in `packages/` that will be the root of your service/component. The name of the directory will be used as the name of the service/component.
+Suppose in above example a feature branch has been created from *master* branch. The commit `E` was pushed in feature branch with changes in package `P1`. 
+In this case this branch is new and there are no commits for `P1`. The base SHA for diff is considered commit `B` as it is seen as the commit from which 
+the feature branch was created. `P1` workflow only is triggered.  
+Now, let's say we push additional commit `F` with changes in package `P1` and `P2`. For `P1` there is commit `E` in current branch that has a passed CI workflow and
+it is used as a base for diff. For `P2` as in the previous case, the base commit for diff is considered `B`.  
+ 
+Now let's consider a more complex example.
 
-- In `.circleci/config.yml` configuration file in `parameters` section add a corresponding parameter:
+<pre>
+A---B---C---D (master branch)  
+ \   \
+  \   E---F---G   (feature branch F1)
+   \       \
+    H---I---J---K (feature branch F2)
+</pre>
+
+In this example we have two feature branches `F1` and `F2`. Let's say feature branch `F2` was first pushed with commit `H`.
+Later, feature branch `F1` was merged into `F2` with merge commit `J`. When triggering the pipeline at commit `J`, the workflows fo which there are
+builds in current branch will consider that commit as a diff base. For workflows that are new, commit `A` is considered as a diff base because
+it is common to current branch and `master`, and is prior to commit `H` which is the first commit in current branch.
+
+
+## Setup
+
+### Personal API token
+To be able to trigger workflows via CircleCI API, you need a CircleCI [personal API token](https://circleci.com/docs/2.0/managing-api-tokens/#creating-a-personal-api-token).
+The `monorepo.sh` script expects to find the token in `CIRCLE_USER_TOKEN` environment variable.
+To prevent having the tokens published to git, you can use [project environment variables](https://circleci.com/docs/2.0/env-vars/#setting-an-environment-variable-in-a-project) or [contexts](https://circleci.com/docs/2.0/contexts/).
+
+### Trigger script configurations
+
+#### Defaults
+
+By default, each package is considered to be located in directory `packages/`. The root directory of the packages can be configured, or for more
+advanced configurations, there is an option co configure the list of packages and their paths. 
+
+#### Custom paths
+
+To provide custom options, firstly create a `.circleci/monorepo.json` file which should be a valid JSON. 
+
+**Customizing the root directory**  
+To configure a custom root directory, provide the `root` option.  
+For example, specify that all services are in `src/services` directory (relative to the root of repository):
+
+```json
+{
+  "root": "src/services"
+}
+```
+
+Each directory in `src/services` will be treated as a package.
+
+**Customizing list of packages and their paths**  
+To have the full control of which packages to list and what paths to use, provide the `packages` option.  
+The `packages` object is a key-value pair, where the key is the name of the package (should correspond to pipeline parameter in `.circleci/config.yml` file) and the value is an array of paths (git `pathspec`).  
+
+Example:
+```json
+{
+  "packages": {
+    "auth": ["packages/auth/"],
+    "api": ["packages/api/**.js"],
+    "app": ["packages/app/", ":!packages/app/*.md"]
+  }
+}
+```
+
+Explanation:  
+The `auth` package is triggered for any change in `packages/auth/` directory.  
+The `api` package is configured to be triggered whenever any `.js` file is changed in `packages/api/` directory, at any level.  
+The `app` package is configured to be triggered to any change in `packages/app/` directory, but ignores any changes in `*.md` files.  
+
+The list of paths for each package are provided as is to the `git diff` command when calculating changes between two commits. 
+See [pathspec](https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddefpathspecapathspec) documentation for a list
+of complete options, as well as [this](https://css-tricks.com/git-pathspecs-and-how-to-use-them/) article for more examples.  
+
+Note that `root` and `packages` options are mutually exclusive. Once `packages` is specified, `root` option is ignored and the list of packages should 
+be provided explicitly.
+
+#### CircleCI API pages
+
+The `monorepo.sh` script uses CircleCI's [API](https://circleci.com/docs/api/#recent-builds-for-a-single-project) to get the list of jobs in the current branch.
+It allows to get only up to *100* jobs in a single page. By default only one page is loaded to get the jobs and from that to calculate which workflows succeeded.  
+It is possible to configure more API pages to be loaded from CircleCI:
+
+Example:
+```json
+{
+  "pages": 3
+}
+```
+This will load the latest *300* jobs in the current branch. Note that for each page a CircleCI API call is executed.  
+Customizing the number of pages to load might be useful when repository contains lots of packages and/or workflows are complex and consist of many more jobs.
+
+### CircleCI config.yml changes
+
+#### Configuring the trigger workflow 
+
+To configure the trigger workflow follow the steps:
+
+- In `.circleci/config.yml` add a `trigger` pipeline parameter with `true` default value:
+
+```yml
+parameters:
+  # This parameter is used to trigger the main workflow
+  trigger:
+    type: boolean
+    default: true
+```
+
+- Add the trigger job:
+
+```yml
+jobs:
+  trigger-workflows:
+    docker: 
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: Trigger workflows
+          command: chmod +x .circleci/monorepo.sh && .circleci/monorepo.sh
+```
+
+- Add the trigger workflow
+
+```yml
+workflows:
+  version: 2
+
+  ci:
+    when: << pipeline.parameters.trigger >>
+    jobs:
+      - trigger-workflows
+```
+
+
+#### Configuring packages
+For each configured package in the repository (either by its name in `packages` object from `monorepo.json` file, or the directory name under the configured root)
+a corresponding pipeline parameter must be configured in `.circleci/config.yml` file:
 
 ```yaml
 parameters:
-  my_awesome_service: # this should be the name of your service
+  ...
+  app: # corresponds to the name of the package
     type: boolean
     default: false
 ```
+
+Now, define a package workflow that is conditioned to be triggered only on corresponding changes:  
 
 - In `.circleci/config.yml` configuration file in `jobs` section define all the jobs that are need by current service/component.
 To set the job's working directory to the directory of the service, you can use job parameter:
 
 ```yaml
-build:
-  parameters:
-    package_name:
-      type: string
-
-  working_directory: ~/project/packages/<< parameters.package_name >>
-  ...
-  steps:
-    - checkout:
-        path: ~/project
-```
-
-- In `.circleci/config.yml` configuration file in `workflows` section add a corresponding workflow:
-
-```yaml
 workflows:
-  when: << pipeline.parameters.my_awesome_service >> # the name of the parameter is the same as service name
+  when: << pipeline.parameters.app >>
     jobs:
-      # add here the jobs used by this workflow
+      ...
 ```
 
-You have no restrictions on which jobs can be used by each workflow. It can be a service specific job, or a job reused by several workflows (services).
-In case you have dependencies between jobs within a workflow, you can have a custom name for the job and then use that name as a requirement:
-
-```yaml
-service:
-  ...
-  jobs:
-    - build:
-        name: service-build # give a name for the `build` job used in current workflow
-        package_name: service # name of the service passed as parameter; used to set the working directory
-        ...
-    - deploy:
-        ...
-        requires:
-          - service-build # list as a dependency the `build` job from this workflow
-```
-
-## Further notes
-
-### Customizing the token
-In CircleCI dashboard when viewing a job details you can see who triggered it. In this case it will be the team member whose API token is configured in `CIRCLE_TOKEN` environment variable (described above).
-
-It would be nicer to show there the name of the team member who made the code changes and triggered the workflow.
-This allows to see then who triggered a specific job, and have a better integration with CircleCI notifications.
-
-
-Unfortunately CircleCI currently doesn't support user specific environment variables. One way to workaround it is to define in the CircleCI project
-a variable for each team member by following a convention, and then use the built-in `$CIRCLE_USERNAME` to get the name of the variable:
-
-```bash
-TOKEN_NAME=CIRCLE_TOKEN_${CIRCLE_USERNAME} # this however will fail if username contain chars like `-`, '.' etc.
-CIRCLE_TOKEN=${!TOKEN_NAME}
-```
-
-### Dependencies
-Current example assumes all services are independent, so that changes made in one service doesn't require a CI build in another service. It doesn't cover the use case when a monorepo contains some shared libraries which are referenced as dependencies in other services. A change in a shared librabry might need all dependent services to be rebuilt or redeployed.
-
-This example could be developed further to handle service dependencies. One way to achieve this is to define a `.dependencies` file which represents the dependencies between services. Then, the `circle_trigger.sh` script should be adjusted to handle the changed services together with all other services that depend on them.
+See [.circleci/config.yml](.circleci/config.yml) file for a running example.
