@@ -46,6 +46,11 @@ orbs:
         docker: 
           - image: cimg/base:stable
 
+executors:
+  node:
+    docker:
+      - image: circleci/node
+
 jobs:
   trigger-workflows:
     docker: 
