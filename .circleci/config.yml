@@ -1,4 +1,7 @@
 version: 2.1
+description: Monorepo management orb
+display:
+  source_url: https://github.com/labs42io/circleci-monorepo
 
 parameters:
   # This parameter is used to trigger the main workflow
@@ -25,10 +28,23 @@ parameters:
     type: boolean
     default: false
 
-executors:
-  node:
-    docker:
-      - image: circleci/node
+orbs:
+  monorepo:
+    jobs:
+      trigger:
+        executor: trigger-executor
+        steps:
+          - trigger-command
+    commands:
+      trigger-command:
+        steps:
+          - run:
+              name: Monorepo trigger
+              command: echo Hello World!
+    executors:
+      trigger-executor:
+        docker: 
+          - image: cimg/base:stable
 
 jobs:
   trigger-workflows:
@@ -101,7 +117,7 @@ workflows:
   ci:
     when: << pipeline.parameters.trigger >>
     jobs:
-      - trigger-workflows
+      - monorepo/trigger
 
 
   # Workflows defined for each package.
