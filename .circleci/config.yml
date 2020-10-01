@@ -32,7 +32,8 @@ executors:
 
 jobs:
   trigger-workflows:
-    executor: node
+    docker: 
+      - image: cimg/base:stable
     steps:
       - checkout
       - run:
