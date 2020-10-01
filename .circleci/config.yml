@@ -40,7 +40,7 @@ orbs:
         steps:
           - run:
               name: Monorepo trigger
-              command: echo Hello World!
+              command: echo Hello World! ${MONOREPO_DEBUG}
     executors:
       trigger-executor:
         docker: 
@@ -61,9 +61,7 @@ jobs:
           # This step is added to demonstrate the possibility to dynamically set the user token 
           name: Set token
           command: echo "export CIRCLE_USER_TOKEN=${CIRCLE_TOKEN}" >> $BASH_ENV
-      - run:
-          name: Trigger workflows
-          command: chmod +x .circleci/monorepo.sh && .circleci/monorepo.sh
+      - monorepo/trigger-command:
           environment:
             # (optional) print additional debug information
             MONOREPO_DEBUG: "true"
@@ -122,7 +120,7 @@ workflows:
   ci:
     when: << pipeline.parameters.trigger >>
     jobs:
-      - monorepo/trigger
+      - trigger-workflows
 
 
   # Workflows defined for each package.
