@@ -1,6 +1,6 @@
 # CircleCI monorepo
 
-[![CircleCI](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master.svg?style=svg)](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master)
+[![CircleCI](https://circleci.com/gh/labs42io/circleci-monorepo/tree/main.svg?style=svg)](https://circleci.com/gh/labs42io/circleci-monorepo/tree/main)
 
 > **UPDATE**  
 > There is a new *experimental* script in branch [`v2`](https://github.com/labs42io/circleci-monorepo/tree/v2) that has the following improvements: 
@@ -28,8 +28,8 @@ For each service a CircleCI workflow with the same name is defined in `.circleci
 
 
 ## Important Disclaimer
-This repository relies on CircleCI API v2 changes which are currently in [Preview release](https://github.com/CircleCI-Public/api-preview-docs/tree/master/docs).
-> Use of the v2 API as long as this notice is in the master branch (current as of June 2019) is done at your own risk and is governed by CircleCI’s Terms of Service.
+This repository relies on CircleCI API v2 changes which are currently in [Preview release](https://github.com/CircleCI-Public/api-preview-docs/tree/main/docs).
+> Use of the v2 API as long as this notice is in the main branch (current as of June 2019) is done at your own risk and is governed by CircleCI’s Terms of Service.
 
 Additionally, it requires use of v2.1 configuration files as well as having [Pipelines](https://circleci.com/docs/2.0/build-processing/) enabled.
 
@@ -50,7 +50,7 @@ Below is a more detailed explanation of how it detects changes:
   - Firstly it attempts to get the latest completed CircleCI workflow for current branch (together with the commit SHA)
   - If there are no builds for current branch (which is usually the case with feature branches),
     it looks for nearest parent branch and gets its commit SHA (using this [solution](https://gist.github.com/joechrysler/6073741))
-  - If there are no builds for parent branch then it uses `master`
+  - If there are no builds for parent branch then it uses `main`
 - Once it has the commit SHA of latest CircleCI workflow, it uses `git log` to list all changes between the two commits and flag those services for which changes are found in their directories.
 
 ## Before you start
