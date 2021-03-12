@@ -132,6 +132,38 @@ CIRCLE_TOKEN=${!TOKEN_NAME}
 ```
 
 ### Dependencies
-Current example assumes all services are independent, so that changes made in one service doesn't require a CI build in another service. It doesn't cover the use case when a monorepo contains some shared libraries which are referenced as dependencies in other services. A change in a shared librabry might need all dependent services to be rebuilt or redeployed.
+Dependencies can be handled using [circleci's advanced logic](https://discuss.circleci.com/t/advanced-logic-in-config/36011) with the `or` operator.
 
-This example could be developed further to handle service dependencies. One way to achieve this is to define a `.dependencies` file which represents the dependencies between services. Then, the `circle_trigger.sh` script should be adjusted to handle the changed services together with all other services that depend on them.
+Example: if package `api` depends on `common`, you should add `common` as a pipeline parameter and use it to define the `when` parameter for api's workflow
+
+```yaml
+workflows:
+  version: 2
+
+  # The main workflow responsible for triggering all other workflows
+  # in which changes are detected.
+  ci:
+    when: << pipeline.parameters.trigger >>
+    jobs:
+      - trigger-workflows
+
+
+  # Workflows defined for each package.
+
+  api:
+    when: 
+      or: 
+        - << pipeline.parameters.api >>
+        - << pipeline.parameters.common >>
+    jobs:
+      - build:
+          name: api-build
+          package_name: api
+      - deploy:
+          name: api-deploy
+          package_name: api
+          requires:
+            - api-build
+```
+
+Now, changes in package `common` will also trigger build for `api`
