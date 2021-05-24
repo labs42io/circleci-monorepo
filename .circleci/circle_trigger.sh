@@ -7,6 +7,11 @@ ROOT="./packages"
 REPOSITORY_TYPE="github"
 CIRCLE_API="https://circleci.com/api"
 
+if [[ -z "${CIRCLE_TOKEN}" ]]; then
+    echo -e "\e[93mEnvironment variable CIRCLE_TOKEN is not set. Exiting.\e[0m"
+  exit 1
+fi
+
 ############################################
 ## 1. Commit SHA of last CI build
 ############################################
