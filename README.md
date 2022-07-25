@@ -3,6 +3,12 @@
 [![CircleCI](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master.svg?style=svg)](https://circleci.com/gh/labs42io/circleci-monorepo/tree/master)
 
 > **UPDATE**  
+> There is now support for detecting changed files and running multistage workflows natively in CircleCI. See these links:
+> https://medium.com/nerd-for-tech/mastering-monorepos-with-circlecis-new-dynamic-config-2e187fe7934c
+> https://circleci.com/blog/introducing-dynamic-config-via-setup-workflows/
+---
+
+> **UPDATE**  
 > There is a new *experimental* script in branch [`v2`](https://github.com/labs42io/circleci-monorepo/tree/v2) that has the following improvements: 
 > - Improved calculation of base commit for new branches that takes into account also the history of past CI builds. Current script doesn't identify correctly the parent when creating new branches from merge commits.
 > - Improved diff calculation using the two-dot *git diff* command.
